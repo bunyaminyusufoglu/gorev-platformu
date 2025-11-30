@@ -17,6 +17,9 @@ app.get('/', (req, res) => {
   res.json({ message: 'Görev Platformu API - Çalışıyor!' });
 });
 
+// Auth Routes
+app.use('/api/auth', require('./routes/auth'));
+
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
