@@ -20,6 +20,9 @@ app.get('/', (req, res) => {
 // Auth Routes
 app.use('/api/auth', require('./routes/auth'));
 
+// Category Routes
+app.use('/api/categories', require('./routes/category'));
+
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
