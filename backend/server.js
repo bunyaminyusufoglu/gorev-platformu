@@ -26,6 +26,9 @@ app.use('/api/categories', require('./routes/category'));
 // Task Routes
 app.use('/api/tasks', require('./routes/task'));
 
+// Task Completion Routes
+app.use('/api/task-completions', require('./routes/taskCompletion'));
+
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
