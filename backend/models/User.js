@@ -25,6 +25,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['admin', 'user'],
     default: 'user'
+  },
+  balance: {
+    type: Number,
+    default: 0,
+    min: [0, 'Bakiye negatif olamaz']
+  },
+  totalEarned: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true

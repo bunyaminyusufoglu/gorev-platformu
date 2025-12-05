@@ -1,5 +1,7 @@
 const TaskCompletion = require('../models/TaskCompletion');
 const Task = require('../models/Task');
+const User = require('../models/User');
+const Transaction = require('../models/Transaction');
 
 // Kullanıcı görev tamamlama (kullanıcı)
 exports.completeTask = async (req, res) => {
@@ -169,10 +171,32 @@ exports.reviewCompletion = async (req, res) => {
 
     await completion.save();
 
-    // Eğer onaylandıysa, görevin tamamlanma sayısını artır
+    // Eğer onaylandıysa, görevin tamamlanma sayısını artır ve kullanıcıya ödül ver
     if (status === 'approved') {
       await Task.findByIdAndUpdate(completion.task._id, {
         $inc: { currentCompletions: 1 }
+      });
+
+      // Kullanıcıya ödül ekle
+      const taskUser = await User.findById(completion.user);
+      const balanceBefore = taskUser.balance;
+      const reward = completion.task.reward;
+
+      taskUser.balance += reward;
+      taskUser.totalEarned += reward;
+      await taskUser.save();
+
+      // İşlem kaydı oluştur
+      await Transaction.create({
+        user: completion.user,
+        type: 'earning',
+        amount: reward,
+        description: `"${completion.task.title}" görevi tamamlandı`,
+        status: 'completed',
+        taskCompletion: completion._id,
+        task: completion.task._id,
+        balanceBefore,
+        balanceAfter: taskUser.balance
       });
     }
 
