@@ -20,6 +20,10 @@ const taskCompletionSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  proofImages: [{
+    type: String,
+    trim: true
+  }],
   adminNote: {
     type: String,
     trim: true

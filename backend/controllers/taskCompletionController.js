@@ -2,6 +2,7 @@ const TaskCompletion = require('../models/TaskCompletion');
 const Task = require('../models/Task');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+const { deleteFiles } = require('../middleware/upload');
 
 // Kullanıcı görev tamamlama (kullanıcı)
 exports.completeTask = async (req, res) => {
@@ -10,6 +11,11 @@ exports.completeTask = async (req, res) => {
     const userId = req.user.userId;
 
     if (!taskId) {
+      // Yüklenen dosyaları sil (varsa)
+      if (req.files && req.files.length > 0) {
+        const filePaths = req.files.map(file => file.filename);
+        deleteFiles(filePaths);
+      }
       return res.status(400).json({
         success: false,
         message: 'Görev ID gereklidir'
@@ -19,6 +25,11 @@ exports.completeTask = async (req, res) => {
     // Görevin var olup olmadığını ve aktif olup olmadığını kontrol et
     const task = await Task.findById(taskId);
     if (!task) {
+      // Yüklenen dosyaları sil (varsa)
+      if (req.files && req.files.length > 0) {
+        const filePaths = req.files.map(file => file.filename);
+        deleteFiles(filePaths);
+      }
       return res.status(404).json({
         success: false,
         message: 'Görev bulunamadı'
@@ -26,6 +37,11 @@ exports.completeTask = async (req, res) => {
     }
 
     if (!task.isActive) {
+      // Yüklenen dosyaları sil (varsa)
+      if (req.files && req.files.length > 0) {
+        const filePaths = req.files.map(file => file.filename);
+        deleteFiles(filePaths);
+      }
       return res.status(400).json({
         success: false,
         message: 'Bu görev aktif değil'
@@ -34,6 +50,11 @@ exports.completeTask = async (req, res) => {
 
     // Maksimum tamamlanma kontrolü
     if (task.maxCompletions && task.currentCompletions >= task.maxCompletions) {
+      // Yüklenen dosyaları sil (varsa)
+      if (req.files && req.files.length > 0) {
+        const filePaths = req.files.map(file => file.filename);
+        deleteFiles(filePaths);
+      }
       return res.status(400).json({
         success: false,
         message: 'Bu görev için maksimum tamamlanma sayısına ulaşıldı'
@@ -48,10 +69,21 @@ exports.completeTask = async (req, res) => {
     });
 
     if (existingCompletion) {
+      // Yüklenen dosyaları sil (varsa)
+      if (req.files && req.files.length > 0) {
+        const filePaths = req.files.map(file => file.filename);
+        deleteFiles(filePaths);
+      }
       return res.status(400).json({
         success: false,
         message: 'Bu görevi zaten tamamladınız veya bekleyen bir tamamlamanız var'
       });
+    }
+
+    // Yüklenen dosya yollarını hazırla
+    let proofImages = [];
+    if (req.files && req.files.length > 0) {
+      proofImages = req.files.map(file => `/uploads/proofs/${file.filename}`);
     }
 
     // Görev tamamlama kaydı oluştur
@@ -59,6 +91,7 @@ exports.completeTask = async (req, res) => {
       user: userId,
       task: taskId,
       proof: proof || '',
+      proofImages: proofImages,
       status: 'pending',
       completedAt: new Date()
     });
@@ -71,6 +104,11 @@ exports.completeTask = async (req, res) => {
       data: completion
     });
   } catch (error) {
+    // Hata durumunda yüklenen dosyaları sil
+    if (req.files && req.files.length > 0) {
+      const filePaths = req.files.map(file => file.filename);
+      deleteFiles(filePaths);
+    }
     res.status(500).json({
       success: false,
       message: 'Görev tamamlanırken bir hata oluştu',

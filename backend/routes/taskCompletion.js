@@ -7,9 +7,15 @@ const {
   reviewCompletion
 } = require('../controllers/taskCompletionController');
 const { protect, admin } = require('../middleware/auth');
+const { uploadMultiple, handleUploadError } = require('../middleware/upload');
 
 // Kullanıcı routes
-router.post('/', protect, completeTask);
+// POST / - Görev tamamlama (resim kanıtı ile birlikte)
+// Form-data olarak gönderilmeli:
+// - taskId: Görev ID
+// - proof: Metin açıklaması (opsiyonel)
+// - proofImages: Resim dosyaları (maksimum 5 adet, her biri maksimum 5MB)
+router.post('/', protect, uploadMultiple, handleUploadError, completeTask);
 router.get('/my', protect, getMyCompletions);
 
 // Admin routes
