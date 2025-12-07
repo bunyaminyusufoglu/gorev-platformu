@@ -40,6 +40,28 @@ const transactionSchema = new mongoose.Schema({
   },
   balanceAfter: {
     type: Number
+  },
+  // Para çekme bilgileri (withdrawal için)
+  withdrawalDetails: {
+    iban: {
+      type: String,
+      trim: true
+    },
+    accountName: {
+      type: String,
+      trim: true
+    },
+    processedAt: {
+      type: Date
+    },
+    processedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    rejectionReason: {
+      type: String,
+      trim: true
+    }
   }
 }, {
   timestamps: true
