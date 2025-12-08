@@ -2,6 +2,7 @@ const TaskCompletion = require('../models/TaskCompletion');
 const Task = require('../models/Task');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+const Notification = require('../models/Notification');
 const { deleteFiles } = require('../middleware/upload');
 
 // Kullanıcı görev tamamlama (kullanıcı)
@@ -241,6 +242,28 @@ exports.reviewCompletion = async (req, res) => {
     await completion.populate('user', 'name email');
     await completion.populate('task', 'title reward');
     await completion.populate('reviewedBy', 'name');
+
+    // Kullanıcıya bildirim gönder
+    const notificationType = status === 'approved' ? 'task_approved' : 'task_rejected';
+    const notificationTitle = status === 'approved' 
+      ? '🎉 Görev Onaylandı!' 
+      : '❌ Görev Reddedildi';
+    const notificationMessage = status === 'approved'
+      ? `"${completion.task.title}" görevi onaylandı ve ${completion.task.reward}₺ kazandınız!`
+      : `"${completion.task.title}" görevi reddedildi.${adminNote ? ` Sebep: ${adminNote}` : ''}`;
+
+    await Notification.createNotification({
+      user: completion.user._id,
+      title: notificationTitle,
+      message: notificationMessage,
+      type: notificationType,
+      relatedTask: completion.task._id,
+      relatedCompletion: completion._id,
+      metadata: {
+        reward: status === 'approved' ? completion.task.reward : 0,
+        adminNote: adminNote || ''
+      }
+    });
 
     res.status(200).json({
       success: true,

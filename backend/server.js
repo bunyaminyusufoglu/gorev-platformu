@@ -36,6 +36,9 @@ app.use('/api/task-completions', require('./routes/taskCompletion'));
 // Wallet Routes
 app.use('/api/wallet', require('./routes/wallet'));
 
+// Notification Routes
+app.use('/api/notifications', require('./routes/notification'));
+
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

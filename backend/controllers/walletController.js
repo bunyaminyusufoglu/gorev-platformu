@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+const Notification = require('../models/Notification');
 
 // Kullanıcının bakiyesini getir
 exports.getBalance = async (req, res) => {
@@ -170,6 +171,21 @@ exports.adjustBalance = async (req, res) => {
       status: 'completed',
       balanceBefore,
       balanceAfter: newBalance
+    });
+
+    // Kullanıcıya bildirim gönder
+    await Notification.createNotification({
+      user: userId,
+      title: amount > 0 ? '💰 Bakiye Eklendi!' : '💸 Bakiye Güncellendi',
+      message: amount > 0 
+        ? `Hesabınıza ${amount}₺ ${type === 'bonus' ? 'bonus' : 'iade'} olarak eklendi.`
+        : `Hesabınızdan ${Math.abs(amount)}₺ düşüldü.`,
+      type: 'earning',
+      metadata: {
+        amount,
+        type,
+        newBalance: newBalance
+      }
     });
 
     res.status(200).json({
@@ -417,6 +433,18 @@ exports.approveWithdrawal = async (req, res) => {
     transaction.withdrawalDetails.processedBy = adminId;
     await transaction.save();
 
+    // Kullanıcıya bildirim gönder
+    await Notification.createNotification({
+      user: transaction.user._id,
+      title: '✅ Para Çekme Onaylandı!',
+      message: `${Math.abs(transaction.amount)}₺ tutarındaki para çekme talebiniz onaylandı ve işleme alındı.`,
+      type: 'withdrawal',
+      metadata: {
+        amount: Math.abs(transaction.amount),
+        iban: transaction.withdrawalDetails.iban
+      }
+    });
+
     res.status(200).json({
       success: true,
       message: 'Para çekme talebi başarıyla onaylandı',
@@ -474,6 +502,19 @@ exports.rejectWithdrawal = async (req, res) => {
     transaction.withdrawalDetails.processedBy = adminId;
     transaction.withdrawalDetails.rejectionReason = reason || 'Belirtilmedi';
     await transaction.save();
+
+    // Kullanıcıya bildirim gönder
+    await Notification.createNotification({
+      user: transaction.user,
+      title: '❌ Para Çekme Reddedildi',
+      message: `${Math.abs(transaction.amount)}₺ tutarındaki para çekme talebiniz reddedildi. Bakiyeniz iade edildi.${reason ? ` Sebep: ${reason}` : ''}`,
+      type: 'withdrawal',
+      metadata: {
+        amount: Math.abs(transaction.amount),
+        reason: reason || 'Belirtilmedi',
+        refunded: true
+      }
+    });
 
     res.status(200).json({
       success: true,
