@@ -154,3 +154,130 @@ exports.getMe = async (req, res) => {
   }
 };
 
+// Profil güncelleme (isim değiştirme)
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name } = req.body;
+    const userId = req.user.userId;
+
+    if (!name || name.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'İsim gereklidir'
+      });
+    }
+
+    if (name.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'İsim en az 2 karakter olmalıdır'
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { name: name.trim() },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Kullanıcı bulunamadı'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Profil başarıyla güncellendi',
+      data: {
+        user
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Profil güncellenirken bir hata oluştu',
+      error: error.message
+    });
+  }
+};
+
+// Şifre değiştirme
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const userId = req.user.userId;
+
+    // Validasyonlar
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mevcut şifre, yeni şifre ve şifre tekrarı gereklidir'
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Yeni şifreler eşleşmiyor'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Yeni şifre en az 6 karakter olmalıdır'
+      });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Yeni şifre mevcut şifreden farklı olmalıdır'
+      });
+    }
+
+    // Kullanıcıyı şifresiyle birlikte getir
+    const user = await User.findById(userId).select('+password');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Kullanıcı bulunamadı'
+      });
+    }
+
+    // Mevcut şifreyi kontrol et
+    const isPasswordCorrect = await user.comparePassword(currentPassword);
+
+    if (!isPasswordCorrect) {
+      return res.status(401).json({
+        success: false,
+        message: 'Mevcut şifre hatalı'
+      });
+    }
+
+    // Yeni şifreyi kaydet
+    user.password = newPassword;
+    await user.save();
+
+    // Yeni token oluştur (güvenlik için)
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Şifre başarıyla değiştirildi',
+      data: {
+        token
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Şifre değiştirilirken bir hata oluştu',
+      error: error.message
+    });
+  }
+};
+
