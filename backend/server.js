@@ -39,6 +39,9 @@ app.use('/api/wallet', require('./routes/wallet'));
 // Notification Routes
 app.use('/api/notifications', require('./routes/notification'));
 
+// Leaderboard Routes
+app.use('/api/leaderboard', require('./routes/leaderboard'));
+
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

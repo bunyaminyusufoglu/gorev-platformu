@@ -1,15 +1,77 @@
 const Task = require('../models/Task');
 
-// Tüm aktif görevleri getir (herkes görebilir)
+// Tüm aktif görevleri getir (herkes görebilir) - Arama ve Filtreleme destekli
 exports.getTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ isActive: true })
+    const {
+      search,           // Başlık veya açıklamada arama
+      category,         // Kategori ID'sine göre filtrele
+      minReward,        // Minimum ödül
+      maxReward,        // Maksimum ödül
+      sortBy,           // Sıralama alanı: reward, createdAt, title
+      sortOrder,        // Sıralama yönü: asc, desc
+      page = 1,
+      limit = 20
+    } = req.query;
+
+    // Filtre objesi oluştur
+    const filter = { isActive: true };
+
+    // Metin araması (başlık veya açıklama)
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Kategori filtresi
+    if (category) {
+      filter.category = category;
+    }
+
+    // Ödül aralığı filtresi
+    if (minReward || maxReward) {
+      filter.reward = {};
+      if (minReward) filter.reward.$gte = parseFloat(minReward);
+      if (maxReward) filter.reward.$lte = parseFloat(maxReward);
+    }
+
+    // Sıralama seçenekleri
+    const sortOptions = {};
+    const validSortFields = ['reward', 'createdAt', 'title', 'currentCompletions'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const order = sortOrder === 'asc' ? 1 : -1;
+    sortOptions[sortField] = order;
+
+    // Sayfalama
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const tasks = await Task.find(filter)
       .populate('category', 'name icon')
-      .sort({ createdAt: -1 });
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Task.countDocuments(filter);
 
     res.status(200).json({
       success: true,
       count: tasks.length,
+      total,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        limit: parseInt(limit)
+      },
+      filters: {
+        search: search || null,
+        category: category || null,
+        minReward: minReward || null,
+        maxReward: maxReward || null,
+        sortBy: sortField,
+        sortOrder: order === 1 ? 'asc' : 'desc'
+      },
       data: tasks
     });
   } catch (error) {
@@ -21,16 +83,90 @@ exports.getTasks = async (req, res) => {
   }
 };
 
-// Tüm görevleri getir (admin için - aktif/pasif tümü)
+// Tüm görevleri getir (admin için - aktif/pasif tümü) - Arama ve Filtreleme destekli
 exports.getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find()
+    const {
+      search,           // Başlık veya açıklamada arama
+      category,         // Kategori ID'sine göre filtrele
+      minReward,        // Minimum ödül
+      maxReward,        // Maksimum ödül
+      isActive,         // Aktif/Pasif filtresi (admin için)
+      sortBy,           // Sıralama alanı
+      sortOrder,        // Sıralama yönü
+      page = 1,
+      limit = 50
+    } = req.query;
+
+    // Filtre objesi oluştur
+    const filter = {};
+
+    // Metin araması
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Kategori filtresi
+    if (category) {
+      filter.category = category;
+    }
+
+    // Aktif/Pasif filtresi
+    if (isActive !== undefined) {
+      filter.isActive = isActive === 'true';
+    }
+
+    // Ödül aralığı filtresi
+    if (minReward || maxReward) {
+      filter.reward = {};
+      if (minReward) filter.reward.$gte = parseFloat(minReward);
+      if (maxReward) filter.reward.$lte = parseFloat(maxReward);
+    }
+
+    // Sıralama
+    const sortOptions = {};
+    const validSortFields = ['reward', 'createdAt', 'title', 'currentCompletions', 'isActive'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const order = sortOrder === 'asc' ? 1 : -1;
+    sortOptions[sortField] = order;
+
+    // Sayfalama
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const tasks = await Task.find(filter)
       .populate('category', 'name icon')
-      .sort({ createdAt: -1 });
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Task.countDocuments(filter);
+
+    // İstatistikler
+    const stats = await Task.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalTasks: { $sum: 1 },
+          activeTasks: { $sum: { $cond: ['$isActive', 1, 0] } },
+          totalRewards: { $sum: '$reward' },
+          avgReward: { $avg: '$reward' }
+        }
+      }
+    ]);
 
     res.status(200).json({
       success: true,
       count: tasks.length,
+      total,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        limit: parseInt(limit)
+      },
+      stats: stats[0] || {},
       data: tasks
     });
   } catch (error) {
