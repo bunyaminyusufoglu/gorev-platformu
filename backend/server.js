@@ -42,6 +42,9 @@ app.use('/api/notifications', require('./routes/notification'));
 // Leaderboard Routes
 app.use('/api/leaderboard', require('./routes/leaderboard'));
 
+// Admin Routes
+app.use('/api/admin', require('./routes/admin'));
+
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

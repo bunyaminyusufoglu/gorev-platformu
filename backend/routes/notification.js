@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, admin } = require('../middleware/auth');
 const {
   getMyNotifications,
   getUnreadCount,
@@ -21,8 +21,8 @@ router.delete('/:id', protect, deleteNotification);
 router.delete('/', protect, deleteAllNotifications);
 
 // Admin route'ları
-router.post('/broadcast', protect, adminOnly, sendBroadcastNotification);
-router.post('/send', protect, adminOnly, sendNotificationToUser);
+router.post('/broadcast', protect, admin, sendBroadcastNotification);
+router.post('/send', protect, admin, sendNotificationToUser);
 
 module.exports = router;
 

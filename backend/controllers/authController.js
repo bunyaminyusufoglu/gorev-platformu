@@ -104,6 +104,18 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Yasaklı kullanıcı kontrolü
+    if (user.isBanned) {
+      return res.status(403).json({
+        success: false,
+        message: 'Hesabınız yasaklanmıştır',
+        banInfo: {
+          reason: user.banReason || 'Belirtilmedi',
+          bannedAt: user.bannedAt
+        }
+      });
+    }
+
     // Şifreyi response'dan çıkar
     user.password = undefined;
 
