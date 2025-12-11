@@ -6,7 +6,11 @@ const {
   getTask,
   createTask,
   updateTask,
-  deleteTask
+  deleteTask,
+  featureTask,
+  unfeatureTask,
+  updateFeature,
+  getFeaturedTasks
 } = require('../controllers/taskController');
 const { protect, admin } = require('../middleware/auth');
 
@@ -19,6 +23,12 @@ router.get('/admin/all', protect, admin, getAllTasks);
 router.post('/', protect, admin, createTask);
 router.put('/:id', protect, admin, updateTask);
 router.delete('/:id', protect, admin, deleteTask);
+
+// Öne çıkarma routes (admin)
+router.get('/admin/featured', protect, admin, getFeaturedTasks);
+router.put('/:id/feature', protect, admin, featureTask);
+router.put('/:id/unfeature', protect, admin, unfeatureTask);
+router.put('/:id/feature/update', protect, admin, updateFeature);
 
 module.exports = router;
 
