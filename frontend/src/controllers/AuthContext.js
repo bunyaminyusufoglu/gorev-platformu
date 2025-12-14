@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as authService from '../models/authService';
-import { setAuthToken, setUser, getUser, clearAuth } from '../utils/auth';
+import {
+  setAuthToken,
+  setRefreshToken,
+  setUser,
+  getUser,
+  clearAuth
+} from '../utils/auth';
 
 const AuthContext = createContext();
 
@@ -51,8 +57,9 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await authService.register(userData);
       if (response.success) {
-        const { user, token } = response.data;
+        const { user, token, refreshToken } = response.data;
         setAuthToken(token);
+        setRefreshToken(refreshToken);
         setUser(user);
         setUserState(user);
         return { success: true, data: response.data };
@@ -73,8 +80,9 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await authService.login(credentials);
       if (response.success) {
-        const { user, token } = response.data;
+        const { user, token, refreshToken } = response.data;
         setAuthToken(token);
+        setRefreshToken(refreshToken);
         setUser(user);
         setUserState(user);
         return { success: true, data: response.data };

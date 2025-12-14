@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema({
     minlength: [6, 'Şifre en az 6 karakter olmalıdır'],
     select: false // Şifre varsayılan olarak sorgularda döndürülmez
   },
+  refreshToken: {
+    type: String,
+    default: null
+  },
   role: {
     type: String,
     enum: ['admin', 'user'],

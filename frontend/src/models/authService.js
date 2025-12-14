@@ -30,3 +30,9 @@ export const changePassword = async (passwordData) => {
   return response.data;
 };
 
+// Token yenile
+export const refreshToken = async (refreshToken) => {
+  const response = await axiosInstance.post('/auth/refresh', { refreshToken });
+  return response.data;
+};
+

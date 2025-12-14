@@ -1,11 +1,19 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-// JWT Token oluşturma
-const generateToken = (userId) => {
+// Access & Refresh token oluşturma
+const generateAccessToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '7d'
+    expiresIn: process.env.JWT_EXPIRE || '15m'
   });
+};
+
+const generateRefreshToken = (userId) => {
+  return jwt.sign(
+    { userId },
+    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_REFRESH_EXPIRE || '30d' }
+  );
 };
 
 // Kayıt
@@ -48,18 +56,24 @@ exports.register = async (req, res) => {
 
     const user = await User.create(userData);
 
-    // Şifreyi response'dan çıkar
-    user.password = undefined;
+    // Tokenleri oluştur
+    const token = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
-    // Token oluştur
-    const token = generateToken(user._id);
+    // Refresh token'ı sakla (rotation için tekli tutuyoruz)
+    await User.findByIdAndUpdate(user._id, { refreshToken });
+
+    // Şifreyi ve refresh'i response'dan çıkar
+    user.password = undefined;
+    user.refreshToken = undefined;
 
     res.status(201).json({
       success: true,
       message: 'Kayıt başarılı',
       data: {
         user,
-        token
+        token,
+        refreshToken
       }
     });
   } catch (error) {
@@ -116,18 +130,24 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Şifreyi response'dan çıkar
-    user.password = undefined;
+    // Tokenleri oluştur
+    const token = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
-    // Token oluştur
-    const token = generateToken(user._id);
+    // Refresh token'ı sakla (rotation için tekli tutuyoruz)
+    await User.findByIdAndUpdate(user._id, { refreshToken });
+
+    // Şifreyi ve refresh'i response'dan çıkar
+    user.password = undefined;
+    user.refreshToken = undefined;
 
     res.status(200).json({
       success: true,
       message: 'Giriş başarılı',
       data: {
         user,
-        token
+        token,
+        refreshToken
       }
     });
   } catch (error) {
@@ -274,20 +294,102 @@ exports.changePassword = async (req, res) => {
     user.password = newPassword;
     await user.save();
 
-    // Yeni token oluştur (güvenlik için)
-    const token = generateToken(user._id);
+    // Yeni tokenler oluştur (güvenlik için tüm oturumları yenile)
+    const token = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+    await User.findByIdAndUpdate(user._id, { refreshToken });
 
     res.status(200).json({
       success: true,
       message: 'Şifre başarıyla değiştirildi',
       data: {
-        token
+        token,
+        refreshToken
       }
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Şifre değiştirilirken bir hata oluştu',
+      error: error.message
+    });
+  }
+};
+
+// Access token yenileme (refresh token ile)
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token gereklidir'
+      });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET
+      );
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        message: 'Geçersiz veya süresi dolmuş refresh token'
+      });
+    }
+
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Kullanıcı bulunamadı'
+      });
+    }
+
+    if (user.isBanned) {
+      return res.status(403).json({
+        success: false,
+        message: 'Hesabınız yasaklanmıştır',
+        banInfo: {
+          reason: user.banReason || 'Belirtilmedi',
+          bannedAt: user.bannedAt
+        }
+      });
+    }
+
+    // Rotation kontrolü: saklanan token ile eşleşmeli
+    if (!user.refreshToken || user.refreshToken !== refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token geçersiz veya kullanıldı'
+      });
+    }
+
+    const newAccessToken = generateAccessToken(user._id);
+    const newRefreshToken = generateRefreshToken(user._id);
+
+    await User.findByIdAndUpdate(user._id, { refreshToken: newRefreshToken });
+
+    // Response temizliği
+    user.refreshToken = undefined;
+
+    res.status(200).json({
+      success: true,
+      message: 'Token yenilendi',
+      data: {
+        user,
+        token: newAccessToken,
+        refreshToken: newRefreshToken
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Token yenilenirken bir hata oluştu',
       error: error.message
     });
   }

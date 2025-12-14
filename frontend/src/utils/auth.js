@@ -12,6 +12,18 @@ export const getAuthToken = () => {
   return localStorage.getItem('token');
 };
 
+export const setRefreshToken = (token) => {
+  if (token) {
+    localStorage.setItem('refreshToken', token);
+  } else {
+    localStorage.removeItem('refreshToken');
+  }
+};
+
+export const getRefreshToken = () => {
+  return localStorage.getItem('refreshToken');
+};
+
 export const setUser = (user) => {
   if (user) {
     localStorage.setItem('user', JSON.stringify(user));
@@ -27,6 +39,7 @@ export const getUser = () => {
 
 export const clearAuth = () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');
 };
 
