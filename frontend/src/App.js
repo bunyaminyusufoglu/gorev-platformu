@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './controllers/AuthContext';
 import Login from './views/pages/Login';
 import Register from './views/pages/Register';
+import Tasks from './views/pages/Tasks';
 
 function App() {
   return (
@@ -11,12 +12,8 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={
-            <div className="container mt-5">
-              <h1>Görev Platformu</h1>
-              <p>Ana sayfa</p>
-            </div>
-          } />
+          <Route path="/" element={<Tasks />} />
+          <Route path="/tasks" element={<Tasks />} />
         </Routes>
       </Router>
     </AuthProvider>
