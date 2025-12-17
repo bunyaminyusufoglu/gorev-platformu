@@ -36,7 +36,7 @@ const Login = () => {
     setIsLoading(false);
 
     if (result.success) {
-      navigate('/');
+      navigate('/user/dashboard');
     } else {
       setFormError(result.message || 'Giriş başarısız');
     }
