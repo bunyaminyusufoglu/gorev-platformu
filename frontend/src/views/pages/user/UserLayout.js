@@ -41,12 +41,11 @@ const UserLayout = ({ user: userProp, children }) => {
   };
 
   return (
-    <div className="bg-light min-vh-100 py-4">
-      <div className="container-fluid">
-        <div className="row g-3">
+    <div className="bg-light min-vh-100">
+      <div className="row g-3">
           {/* Sol sabit sidebar */}
           <aside className="col-12 col-md-4 col-lg-3 col-xl-2">
-            <div className="card border-0 shadow-sm h-100">
+            <div className="card border-0 shadow-sm min-vh-100">
               <div className="card-body d-flex flex-column">
                 <div className="d-flex align-items-center justify-content-between mb-3">
                   <div
@@ -64,10 +63,6 @@ const UserLayout = ({ user: userProp, children }) => {
                 </div>
 
                 <hr className="my-2" />
-
-                <div className="text-uppercase text-muted fw-semibold mb-2" style={{ fontSize: 11 }}>
-                  Menü
-                </div>
 
                 <div className="list-group list-group-flush flex-grow-1">
                   <button
@@ -106,10 +101,10 @@ const UserLayout = ({ user: userProp, children }) => {
                   >
                     Ayarlar
                   </button>
-                  <button type="button" className="btn btn-outline-danger btn-sm px-3 w-100 w-sm-auto" onClick={handleLogout}>
-                    Çıkış Yap
-                  </button>
                 </div>
+                <button type="button" className="btn btn-outline-danger btn-sm px-3 w-100 w-sm-auto" onClick={handleLogout}>
+                  Çıkış Yap
+                </button>
               </div>
             </div>
           </aside>
@@ -117,10 +112,8 @@ const UserLayout = ({ user: userProp, children }) => {
           {/* Sağ içerik alanı */}
           <div className="col-12 col-md-8 col-lg-9 col-xl-10">{renderChildren()}</div>
         </div>
-      </div>
     </div>
   );
 };
 
 export default UserLayout;
-

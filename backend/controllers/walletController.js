@@ -5,7 +5,8 @@ const Notification = require('../models/Notification');
 // Kullanıcının bakiyesini getir
 exports.getBalance = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('balance totalEarned');
+    // req.user zaten middleware'den User objesi olarak geliyor
+    const user = req.user;
 
     if (!user) {
       return res.status(404).json({
@@ -34,7 +35,7 @@ exports.getBalance = async (req, res) => {
 exports.getTransactions = async (req, res) => {
   try {
     const { type, status, page = 1, limit = 20 } = req.query;
-    const userId = req.user.userId;
+    const userId = req.user._id;
 
     const filter = { user: userId };
     if (type) filter.type = type;
@@ -213,7 +214,7 @@ exports.adjustBalance = async (req, res) => {
 exports.requestWithdrawal = async (req, res) => {
   try {
     const { amount, iban, accountName } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user._id;
 
     // Validasyonlar
     if (!amount || !iban || !accountName) {
@@ -318,7 +319,7 @@ exports.requestWithdrawal = async (req, res) => {
 // Kullanıcının para çekme taleplerini getir
 exports.getWithdrawalRequests = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const { status, page = 1, limit = 10 } = req.query;
 
     const filter = { user: userId, type: 'withdrawal' };
@@ -402,7 +403,7 @@ exports.getAllWithdrawalRequests = async (req, res) => {
 exports.approveWithdrawal = async (req, res) => {
   try {
     const { transactionId } = req.params;
-    const adminId = req.user.userId;
+    const adminId = req.user._id;
 
     const transaction = await Transaction.findById(transactionId).populate('user', 'name email');
 
@@ -537,9 +538,17 @@ exports.rejectWithdrawal = async (req, res) => {
 // Cüzdan özeti (kullanıcı dashboard için)
 exports.getWalletSummary = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    // req.user zaten middleware'den User objesi olarak geliyor
+    const user = req.user;
+    const userId = user._id;
+    const mongoose = require('mongoose');
 
-    const user = await User.findById(userId).select('balance totalEarned');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Kullanıcı bulunamadı'
+      });
+    }
 
     // Son 30 günlük kazanç
     const thirtyDaysAgo = new Date();
@@ -548,7 +557,7 @@ exports.getWalletSummary = async (req, res) => {
     const recentEarnings = await Transaction.aggregate([
       {
         $match: {
-          user: user._id,
+          user: userId,
           type: 'earning',
           status: 'completed',
           createdAt: { $gte: thirtyDaysAgo }
@@ -573,20 +582,21 @@ exports.getWalletSummary = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        balance: user.balance,
-        totalEarned: user.totalEarned,
+        balance: user.balance || 0,
+        totalEarned: user.totalEarned || 0,
         last30Days: {
           earnings: recentEarnings[0]?.total || 0,
           completedTasks: recentEarnings[0]?.count || 0
         },
-        pendingTasks: pendingCompletions
+        pendingTasks: pendingCompletions || 0
       }
     });
   } catch (error) {
+    console.error('getWalletSummary error:', error);
     res.status(500).json({
       success: false,
       message: 'Cüzdan özeti getirilirken bir hata oluştu',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
