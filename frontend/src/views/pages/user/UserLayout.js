@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../../controllers/AuthContext';
 import UserTasks from './UserTasks';
 import UserDashboard from './UserDashboard';
+import UserWallet from './UserWallet';
 
 const UserLayout = ({ user: userProp, children }) => {
   const { user: ctxUser, logout } = useAuth();
@@ -28,7 +29,7 @@ const UserLayout = ({ user: userProp, children }) => {
         case 'tasks':
           return <UserTasks />;
         case 'wallet':
-          return <UserDashboard />;
+          return <UserWallet />;
         case 'settings':
           return <UserDashboard />;
         default:
