@@ -3,6 +3,7 @@ import { useAuth } from '../../../controllers/AuthContext';
 import UserTasks from './UserTasks';
 import UserDashboard from './UserDashboard';
 import UserWallet from './UserWallet';
+import UserSettings from './UserSettings';
 
 const UserLayout = ({ user: userProp, children }) => {
   const { user: ctxUser, logout } = useAuth();
@@ -31,7 +32,7 @@ const UserLayout = ({ user: userProp, children }) => {
         case 'wallet':
           return <UserWallet />;
         case 'settings':
-          return <UserDashboard />;
+          return <UserSettings />;
         default:
           return null;
       }
