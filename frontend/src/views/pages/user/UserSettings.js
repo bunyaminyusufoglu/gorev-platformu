@@ -124,9 +124,8 @@ const UserSettings = () => {
   };
 
   return (
-    <div className="row">
+    <div className="row pt-4">
       <div className="col-12">
-        <h1 className="h4 mb-4">Ayarlar</h1>
 
         {/* Tab Navigation */}
         <ul className="nav nav-tabs mb-4" role="tablist">

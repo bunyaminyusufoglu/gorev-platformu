@@ -226,9 +226,8 @@ const UserTasks = () => {
   };
 
   return (
-    <div className="row">
+    <div className="row pt-4">
       <div className="col-12">
-        <h1 className="h4 mb-4">Görevlerim</h1>
 
         {/* Filtreler */}
         <div className="card mb-4 border-0 shadow-sm">

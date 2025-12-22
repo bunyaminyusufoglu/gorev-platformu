@@ -208,9 +208,8 @@ const UserWallet = () => {
 
   if (loading && transactions.length === 0) {
     return (
-      <div className="row">
+      <div className="row pt-4">
         <div className="col-12">
-          <h1 className="h4 mb-4">Cüzdan</h1>
           <div className="text-center py-5">
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Yükleniyor...</span>
@@ -222,9 +221,8 @@ const UserWallet = () => {
   }
 
   return (
-    <div className="row">
+    <div className="row pt-4">
       <div className="col-12">
-        <h1 className="h4 mb-4">Cüzdan</h1>
 
         {/* Bakiye Kartları */}
         <div className="row g-3 mb-4">

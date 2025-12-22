@@ -41,7 +41,6 @@ const UserDashboard = () => {
     return (
       <div className="row">
         <div className="col-12">
-          <h1 className="h4 mb-4">Dashboard</h1>
           <div className="text-center py-5">
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Yükleniyor...</span>
@@ -56,7 +55,6 @@ const UserDashboard = () => {
     return (
       <div className="row">
         <div className="col-12">
-          <h1 className="h4 mb-4">Dashboard</h1>
           <div className="alert alert-danger" role="alert">
             {error}
           </div>
@@ -66,10 +64,8 @@ const UserDashboard = () => {
   }
 
   return (
-    <div className="row">
+    <div className="row pt-4">
       <div className="col-12">
-        <h1 className="h4 mb-4">Dashboard</h1>
-
         {/* İstatistik Kartları */}
         <div className="row g-3 mb-4">
           <div className="col-md-6 col-lg-3">

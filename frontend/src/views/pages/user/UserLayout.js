@@ -4,6 +4,7 @@ import UserTasks from './UserTasks';
 import UserDashboard from './UserDashboard';
 import UserWallet from './UserWallet';
 import UserSettings from './UserSettings';
+import UserNotifications from './UserNotifications';
 
 const UserLayout = ({ user: userProp, children }) => {
   const { user: ctxUser, logout } = useAuth();
@@ -31,6 +32,8 @@ const UserLayout = ({ user: userProp, children }) => {
           return <UserTasks />;
         case 'wallet':
           return <UserWallet />;
+        case 'notifications':
+          return <UserNotifications />;
         case 'settings':
           return <UserSettings />;
         default:
@@ -93,6 +96,15 @@ const UserLayout = ({ user: userProp, children }) => {
                     onClick={() => setActiveTab('wallet')}
                   >
                     Cüzdan
+                  </button>
+                  <button
+                    type="button"
+                    className={`list-group-item list-group-item-action border-0 rounded-3 mb-1 ${
+                      activeTab === 'notifications' ? 'active' : ''
+                    }`}
+                    onClick={() => setActiveTab('notifications')}
+                  >
+                    Bildirimler
                   </button>
                   <button
                     type="button"
