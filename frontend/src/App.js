@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './controllers/AuthContext';
 import Login from './views/pages/Login';
 import Register from './views/pages/Register';
+import Home from './views/pages/Home';
 import Header from './views/components/Header';
 import UserLayout from './views/pages/user/UserLayout';
 
@@ -20,6 +21,7 @@ function App() {
       <Router>
         <Header />
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route
             path="/user/dashboard"
             element={
