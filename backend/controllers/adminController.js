@@ -413,6 +413,108 @@ exports.changeUserRole = async (req, res) => {
   }
 };
 
+// Kullanıcı bilgilerini güncelle
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, balance, totalEarned } = req.body;
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Kullanıcı bulunamadı'
+      });
+    }
+
+    // İsim güncelleme
+    if (name !== undefined) {
+      if (!name || name.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'İsim gereklidir'
+        });
+      }
+      if (name.trim().length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: 'İsim en az 2 karakter olmalıdır'
+        });
+      }
+      user.name = name.trim();
+    }
+
+    // Email güncelleme
+    if (email !== undefined) {
+      if (!email || email.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email gereklidir'
+        });
+      }
+      const emailRegex = /^\S+@\S+\.\S+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Geçerli bir email adresi giriniz'
+        });
+      }
+      // Email benzersizlik kontrolü
+      const existingUser = await User.findOne({ email: email.toLowerCase().trim(), _id: { $ne: id } });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Bu email adresi zaten kullanılıyor'
+        });
+      }
+      user.email = email.toLowerCase().trim();
+    }
+
+    // Bakiye güncelleme
+    if (balance !== undefined) {
+      const balanceNum = parseFloat(balance);
+      if (isNaN(balanceNum) || balanceNum < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Bakiye geçerli bir pozitif sayı olmalıdır'
+        });
+      }
+      user.balance = balanceNum;
+    }
+
+    // Toplam kazanç güncelleme
+    if (totalEarned !== undefined) {
+      const totalEarnedNum = parseFloat(totalEarned);
+      if (isNaN(totalEarnedNum) || totalEarnedNum < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Toplam kazanç geçerli bir pozitif sayı olmalıdır'
+        });
+      }
+      user.totalEarned = totalEarnedNum;
+    }
+
+    await user.save();
+
+    const updatedUser = await User.findById(id).select('-password').populate('bannedBy', 'name email');
+
+    res.status(200).json({
+      success: true,
+      message: 'Kullanıcı bilgileri başarıyla güncellendi',
+      data: {
+        user: updatedUser
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Kullanıcı güncellenirken bir hata oluştu',
+      error: error.message
+    });
+  }
+};
+
 // ==================== DASHBOARD İSTATİSTİKLERİ ====================
 
 // Genel platform istatistikleri

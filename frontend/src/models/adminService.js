@@ -70,3 +70,13 @@ export const deleteUser = async (id) => {
   }
 };
 
+// Kullanıcı bilgilerini güncelle
+export const updateUser = async (id, userData) => {
+  try {
+    const response = await axiosInstance.put(`/admin/users/${id}`, userData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
