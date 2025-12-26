@@ -6,6 +6,12 @@ export const getTasks = async (params = {}) => {
   return response.data;
 };
 
+// Tüm görevleri getir (admin için - aktif/pasif tümü)
+export const getAllTasks = async (params = {}) => {
+  const response = await axiosInstance.get('/tasks/admin/all', { params });
+  return response.data;
+};
+
 // Görev oluştur (admin)
 export const createTask = async (payload) => {
   const response = await axiosInstance.post('/tasks', payload);
@@ -15,6 +21,12 @@ export const createTask = async (payload) => {
 // Görev güncelle (admin)
 export const updateTask = async (taskId, payload) => {
   const response = await axiosInstance.put(`/tasks/${taskId}`, payload);
+  return response.data;
+};
+
+// Görev sil (admin)
+export const deleteTask = async (taskId) => {
+  const response = await axiosInstance.delete(`/tasks/${taskId}`);
   return response.data;
 };
 

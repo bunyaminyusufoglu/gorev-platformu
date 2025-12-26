@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../../controllers/AuthContext';
 import AdminDashboard from './AdminDashboard';
 import AdminUsers from './AdminUsers';
+import AdminTasks from './AdminTasks';
 
 const AdminLayout = ({ user: userProp, children }) => {
   const { user: ctxUser, logout } = useAuth();
@@ -27,6 +28,8 @@ const AdminLayout = ({ user: userProp, children }) => {
           return <AdminDashboard />;
         case 'users':
           return <AdminUsers />;
+        case 'tasks':
+          return <AdminTasks />;
         default:
           return null;
       }
@@ -78,6 +81,15 @@ const AdminLayout = ({ user: userProp, children }) => {
                   onClick={() => setActiveTab('users')}
                 >
                   Kullanıcı Yönetimi
+                </button>
+                <button
+                  type="button"
+                  className={`list-group-item list-group-item-action border-0 rounded-3 mb-1 ${
+                    activeTab === 'tasks' ? 'active' : ''
+                  }`}
+                  onClick={() => setActiveTab('tasks')}
+                >
+                  Görev Yönetimi
                 </button>
               </div>
               <button 
