@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "check-admins": "node scripts/checkAdmins.js",
+    "change-admin-password": "node scripts/checkAdmins.js"
   },
   "keywords": [
     "express",

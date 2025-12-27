@@ -36,7 +36,13 @@ const Login = () => {
     setIsLoading(false);
 
     if (result.success) {
-      navigate('/user/dashboard');
+      // Kullanıcı rolüne göre yönlendir
+      const loggedInUser = result.data?.user;
+      if (loggedInUser?.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/user/dashboard');
+      }
     } else {
       setFormError(result.message || 'Giriş başarısız');
     }

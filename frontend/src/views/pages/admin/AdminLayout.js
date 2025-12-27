@@ -3,6 +3,7 @@ import { useAuth } from '../../../controllers/AuthContext';
 import AdminDashboard from './AdminDashboard';
 import AdminUsers from './AdminUsers';
 import AdminTasks from './AdminTasks';
+import AdminCompletions from './AdminCompletions';
 
 const AdminLayout = ({ user: userProp, children }) => {
   const { user: ctxUser, logout } = useAuth();
@@ -30,6 +31,8 @@ const AdminLayout = ({ user: userProp, children }) => {
           return <AdminUsers />;
         case 'tasks':
           return <AdminTasks />;
+        case 'completions':
+          return <AdminCompletions />;
         default:
           return null;
       }
@@ -41,10 +44,10 @@ const AdminLayout = ({ user: userProp, children }) => {
 
   return (
     <div className="bg-light min-vh-100">
-      <div className="row g-3">
+      <div className="row g-3 m-0 p-0">
         {/* Sol sabit sidebar */}
-        <aside className="col-12 col-md-4 col-lg-3 col-xl-2">
-          <div className="card border-0 shadow-sm min-vh-100">
+        <aside className="col-12 col-md-4 col-lg-3 col-xl-2 p-0 m-0">
+          <div className="card border-0 shadow-sm p-0 m-0 min-vh-100">
             <div className="card-body d-flex flex-column">
               <div className="d-flex align-items-center justify-content-between mb-3">
                 <div
@@ -90,6 +93,15 @@ const AdminLayout = ({ user: userProp, children }) => {
                   onClick={() => setActiveTab('tasks')}
                 >
                   Görev Yönetimi
+                </button>
+                <button
+                  type="button"
+                  className={`list-group-item list-group-item-action border-0 rounded-3 mb-1 ${
+                    activeTab === 'completions' ? 'active' : ''
+                  }`}
+                  onClick={() => setActiveTab('completions')}
+                >
+                  Görev Tamamlamaları
                 </button>
               </div>
               <button 

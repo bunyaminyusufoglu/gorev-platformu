@@ -80,3 +80,26 @@ export const updateUser = async (id, userData) => {
   }
 };
 
+// Tüm görev tamamlamalarını listele
+export const getAllCompletions = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/task-completions/admin/all', { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Görev tamamlamayı onayla/reddet
+export const reviewCompletion = async (id, status, adminNote = '') => {
+  try {
+    const response = await axiosInstance.put(`/task-completions/admin/review/${id}`, {
+      status,
+      adminNote
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+

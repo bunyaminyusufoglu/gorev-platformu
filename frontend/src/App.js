@@ -6,11 +6,27 @@ import Register from './views/pages/Register';
 import Home from './views/pages/Home';
 import Header from './views/components/Header';
 import UserLayout from './views/pages/user/UserLayout';
+import AdminLayout from './views/pages/admin/AdminLayout';
 
 const PrivateRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+  // Admin kullanıcıları user dashboard'a erişemesin
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  return children;
+};
+
+const AdminRoute = ({ children }) => {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  if (user?.role !== 'admin') {
+    return <Navigate to="/user/dashboard" replace />;
   }
   return children;
 };
@@ -28,6 +44,14 @@ function App() {
               <PrivateRoute>
                 <UserLayout />
               </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
             }
           />
           <Route path="/login" element={<Login />} />
