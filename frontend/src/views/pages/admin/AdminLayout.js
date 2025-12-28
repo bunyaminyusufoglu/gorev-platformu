@@ -4,6 +4,7 @@ import AdminDashboard from './AdminDashboard';
 import AdminUsers from './AdminUsers';
 import AdminTasks from './AdminTasks';
 import AdminCompletions from './AdminCompletions';
+import AdminWithdrawals from './AdminWithdrawals';
 
 const AdminLayout = ({ user: userProp, children }) => {
   const { user: ctxUser, logout } = useAuth();
@@ -33,6 +34,8 @@ const AdminLayout = ({ user: userProp, children }) => {
           return <AdminTasks />;
         case 'completions':
           return <AdminCompletions />;
+        case 'withdrawals':
+          return <AdminWithdrawals />;
         default:
           return null;
       }
@@ -102,6 +105,15 @@ const AdminLayout = ({ user: userProp, children }) => {
                   onClick={() => setActiveTab('completions')}
                 >
                   Görev Tamamlamaları
+                </button>
+                <button
+                  type="button"
+                  className={`list-group-item list-group-item-action border-0 rounded-3 mb-1 ${
+                    activeTab === 'withdrawals' ? 'active' : ''
+                  }`}
+                  onClick={() => setActiveTab('withdrawals')}
+                >
+                  Çekim Talepleri
                 </button>
               </div>
               <button 

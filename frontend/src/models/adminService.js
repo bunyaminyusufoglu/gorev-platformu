@@ -103,3 +103,35 @@ export const reviewCompletion = async (id, status, adminNote = '') => {
   }
 };
 
+// Tüm para çekme taleplerini listele
+export const getAllWithdrawalRequests = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/wallet/admin/withdrawals', { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Para çekme talebini onayla
+export const approveWithdrawal = async (transactionId) => {
+  try {
+    const response = await axiosInstance.put(`/wallet/admin/withdrawals/${transactionId}/approve`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Para çekme talebini reddet
+export const rejectWithdrawal = async (transactionId, reason = '') => {
+  try {
+    const response = await axiosInstance.put(`/wallet/admin/withdrawals/${transactionId}/reject`, {
+      reason
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
