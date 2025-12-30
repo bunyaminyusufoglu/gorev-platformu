@@ -124,10 +124,19 @@ exports.adjustBalance = async (req, res) => {
   try {
     const { userId, amount, type, description } = req.body;
 
+    const parsedAmount = Number(amount);
+
     if (!userId || amount === undefined || !type) {
       return res.status(400).json({
         success: false,
         message: 'Kullanıcı ID, miktar ve işlem tipi gereklidir'
+      });
+    }
+
+    if (!Number.isFinite(parsedAmount)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Miktar sayısal olmalıdır'
       });
     }
 
@@ -147,7 +156,7 @@ exports.adjustBalance = async (req, res) => {
     }
 
     const balanceBefore = user.balance;
-    const newBalance = balanceBefore + amount;
+    const newBalance = balanceBefore + parsedAmount;
 
     if (newBalance < 0) {
       return res.status(400).json({
@@ -158,8 +167,8 @@ exports.adjustBalance = async (req, res) => {
 
     // Bakiyeyi güncelle
     user.balance = newBalance;
-    if (amount > 0) {
-      user.totalEarned += amount;
+    if (parsedAmount > 0) {
+      user.totalEarned += parsedAmount;
     }
     await user.save();
 
@@ -167,7 +176,7 @@ exports.adjustBalance = async (req, res) => {
     const transaction = await Transaction.create({
       user: userId,
       type,
-      amount,
+      amount: parsedAmount,
       description: description || `Admin tarafından ${type === 'bonus' ? 'bonus' : 'iade'} eklendi`,
       status: 'completed',
       balanceBefore,
@@ -178,9 +187,9 @@ exports.adjustBalance = async (req, res) => {
     await Notification.createNotification({
       user: userId,
       title: amount > 0 ? '💰 Bakiye Eklendi!' : '💸 Bakiye Güncellendi',
-      message: amount > 0 
-        ? `Hesabınıza ${amount}₺ ${type === 'bonus' ? 'bonus' : 'iade'} olarak eklendi.`
-        : `Hesabınızdan ${Math.abs(amount)}₺ düşüldü.`,
+      message: parsedAmount > 0 
+        ? `Hesabınıza ${parsedAmount}₺ ${type === 'bonus' ? 'bonus' : 'iade'} olarak eklendi.`
+        : `Hesabınızdan ${Math.abs(parsedAmount)}₺ düşüldü.`,
       type: 'earning',
       metadata: {
         amount,
@@ -216,6 +225,8 @@ exports.requestWithdrawal = async (req, res) => {
     const { amount, iban, accountName } = req.body;
     const userId = req.user._id;
 
+    const parsedAmount = Number(amount);
+
     // Validasyonlar
     if (!amount || !iban || !accountName) {
       return res.status(400).json({
@@ -224,10 +235,10 @@ exports.requestWithdrawal = async (req, res) => {
       });
     }
 
-    if (amount <= 0) {
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Çekilecek miktar 0\'dan büyük olmalıdır'
+        message: 'Çekilecek miktar sayısal ve 0\'dan büyük olmalıdır'
       });
     }
 
@@ -249,13 +260,13 @@ exports.requestWithdrawal = async (req, res) => {
     }
 
     // Bakiye kontrolü
-    if (user.balance < amount) {
+    if (user.balance < parsedAmount) {
       return res.status(400).json({
         success: false,
         message: 'Yetersiz bakiye',
         data: {
           currentBalance: user.balance,
-          requestedAmount: amount
+          requestedAmount: parsedAmount
         }
       });
     }
@@ -276,14 +287,14 @@ exports.requestWithdrawal = async (req, res) => {
 
     // Bakiyeden düş (talep oluşturulduğunda)
     const balanceBefore = user.balance;
-    user.balance -= amount;
+    user.balance -= parsedAmount;
     await user.save();
 
     // Para çekme talebi oluştur
     const transaction = await Transaction.create({
       user: userId,
       type: 'withdrawal',
-      amount: -amount, // Negatif olarak kaydet (para çıkışı)
+      amount: -parsedAmount, // Negatif olarak kaydet (para çıkışı)
       description: 'Para çekme talebi',
       status: 'pending',
       balanceBefore,
@@ -299,7 +310,7 @@ exports.requestWithdrawal = async (req, res) => {
       message: 'Para çekme talebi başarıyla oluşturuldu',
       data: {
         transactionId: transaction._id,
-        amount,
+        amount: parsedAmount,
         iban: transaction.withdrawalDetails.iban,
         accountName: transaction.withdrawalDetails.accountName,
         status: transaction.status,

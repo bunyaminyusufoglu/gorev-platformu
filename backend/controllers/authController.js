@@ -39,19 +39,19 @@ exports.register = async (req, res) => {
     }
 
     // Kullanıcı oluşturma
-    // Role sadece admin olarak kayıt yapılabilir (güvenlik için)
-    // Normal kullanıcılar role belirtmeden kayıt olur, default 'user' olur
+    // Güvenlik: dışarıdan admin rolü atanmasına izin verme
     const userData = {
       name,
       email,
-      password
+      password,
+      role: 'user'
     };
 
-    // Eğer role belirtilmişse ve 'admin' ise (güvenlik için özel bir anahtar gerekebilir)
-    // Şimdilik sadece 'user' rolü ile kayıt yapılabilir
-    if (role && role === 'admin') {
-      // Admin kaydı için özel bir kontrol eklenebilir
-      userData.role = 'admin';
+    if (role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin kaydı yapılamaz'
+      });
     }
 
     const user = await User.create(userData);

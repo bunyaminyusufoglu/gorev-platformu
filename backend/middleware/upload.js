@@ -14,6 +14,31 @@ if (!fs.existsSync(proofsDir)) {
   fs.mkdirSync(proofsDir, { recursive: true });
 }
 
+// Kabul edilen tipler ve limitler
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp'
+];
+const ALLOWED_EXTENSIONS = new Set(['.jpeg', '.jpg', '.png', '.gif', '.webp']);
+const BLOCKED_EXTENSIONS = new Set(['.exe', '.bat', '.cmd', '.sh', '.js', '.msi', '.com', '.scr', '.cpl']);
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_COUNT = 5;
+
+const hasDoubleExtension = (filename) => {
+  const parts = filename.split('.');
+  return parts.length > 2; // örn: file.jpg.exe
+};
+
+const isExtensionAllowed = (filename) => {
+  const ext = path.extname(filename || '').toLowerCase();
+  if (!ext) return false;
+  if (BLOCKED_EXTENSIONS.has(ext)) return false;
+  return ALLOWED_EXTENSIONS.has(ext);
+};
+
 // Storage ayarları
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -27,15 +52,27 @@ const storage = multer.diskStorage({
   }
 });
 
-// Dosya filtresi - sadece resim dosyaları kabul et
+// Dosya filtresi - sadece resim dosyaları kabul et + uzantı kontrolü + basit kötüye kullanım önlemi
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-  
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Sadece resim dosyaları yüklenebilir (jpeg, jpg, png, gif, webp)'), false);
+  if (!file || !file.originalname) {
+    return cb(new Error('Geçersiz dosya'), false);
   }
+
+  if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+    return cb(new Error('Sadece resim dosyaları yüklenebilir (jpeg, jpg, png, gif, webp)'), false);
+  }
+
+  if (!isExtensionAllowed(file.originalname)) {
+    return cb(new Error('Desteklenmeyen dosya uzantısı'), false);
+  }
+
+  if (hasDoubleExtension(file.originalname)) {
+    return cb(new Error('Çoklu uzantılı dosyalar kabul edilmez'), false);
+  }
+
+  // Not: Burada gerçek zamanlı antivirüs taraması yok.
+  // İleride AV entegrasyonu için hook bırakıyoruz.
+  return cb(null, true);
 };
 
 // Multer konfigürasyonu
@@ -43,8 +80,8 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB maksimum dosya boyutu
-    files: 5 // Maksimum 5 dosya yüklenebilir
+    fileSize: MAX_FILE_SIZE_BYTES, // 5MB maksimum dosya boyutu
+    files: MAX_FILE_COUNT // Maksimum 5 dosya yüklenebilir
   }
 });
 
@@ -95,9 +132,8 @@ const handleUploadError = (err, req, res, next) => {
 // Dosya silme yardımcı fonksiyonu
 const deleteFile = (filePath) => {
   const fullPath = path.join(proofsDir, filePath);
-  if (fs.existsSync(fullPath)) {
-    fs.unlinkSync(fullPath);
-  }
+  if (!fs.existsSync(fullPath)) return;
+  fs.unlinkSync(fullPath);
 };
 
 // Birden fazla dosya silme

@@ -23,14 +23,31 @@ exports.protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       // Kullanıcıyı bul
-      req.user = await User.findById(decoded.userId);
+      const user = await User.findById(decoded.userId);
       
-      if (!req.user) {
+      if (!user) {
         return res.status(401).json({
           success: false,
           message: 'Kullanıcı bulunamadı'
         });
       }
+
+      // Ban kontrolü
+      if (user.isBanned) {
+        return res.status(403).json({
+          success: false,
+          message: 'Hesabınız yasaklanmıştır',
+          banInfo: {
+            reason: user.banReason || 'Belirtilmedi',
+            bannedAt: user.bannedAt
+          }
+        });
+      }
+
+      // Ortak kullanım için kimlik bilgilerini ekle
+      req.user = user;
+      req.userId = user._id;
+      req.user.userId = user._id;
 
       next();
     } catch (error) {
